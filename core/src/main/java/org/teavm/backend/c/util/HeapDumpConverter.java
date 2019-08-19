@@ -413,19 +413,18 @@ public final class HeapDumpConverter {
                     output.writeInt(1);
                     writeId(output, classId);
                     output.writeInt(data.length);
-                    List<ClassDescriptor> classes = new ArrayList<>();
+                    int dataPtr = data.length;
                     while (cls != null) {
-                        classes.add(cls);
-                        cls = cls.superClassId != 0 ? symbolTable.getClassById(cls.superClassId) : null;
-                    }
-                    int dataPtr = 0;
-                    for (int i = classes.size() - 1; i >= 0; --i) {
-                        cls = classes.get(i);
+                        for (FieldDescriptor field : cls.fields) {
+                            dataPtr -= typeSize(field.type);
+                        }
+                        int ptr = dataPtr;
                         for (FieldDescriptor field : cls.fields) {
                             int size = typeSize(field.type);
-                            output.write(data, dataPtr, size);
-                            dataPtr += size;
+                            output.write(data, ptr, size);
+                            ptr += size;
                         }
+                        cls = cls.superClassId != 0 ? symbolTable.getClassById(cls.superClassId) : null;
                     }
                 } else {
                     ClassDescriptor itemCls = symbolTable.getClassById(cls.itemClassId);
